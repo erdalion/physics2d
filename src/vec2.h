@@ -71,8 +71,9 @@ public:
         const float len = this->length();
         if (len == 0.0f)
             return Vec2(0.0f, 0.0f);
-        else
-            return *this / len;
+
+        Vec2 result = *this;
+        return result /= len;
     }
 };
 
