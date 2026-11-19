@@ -20,14 +20,17 @@ private:
     float screenWidth;
     float screenHeight;
     float particleRadius;
+    float damping;
 
 public:
-    Solver(float width, float height, float radius, Vec2 gravity)
+    Solver(float width, float height, float radius, Vec2 gravity, float pDamping = 0.75f)
         : grid(width, height, radius),
           gravity(gravity),
           screenWidth(width),
           screenHeight(height),
-          particleRadius(radius)
+          particleRadius(radius),
+          damping(pDamping)
+          
     {
         particles.reserve(10000);
         grid.clear();
@@ -36,6 +39,12 @@ public:
     void addParticle(Vec2 pos, float radius, Color color = WHITE)
     {
         particles.push_back(Particle{pos, pos, std::min(particleRadius, radius), Vec2{}, color});
+    }
+
+    void clearParticles()
+    {
+        particles.clear();
+        grid.clear();
     }
 
     void update(float dt, int subSteps = 8)
@@ -60,17 +69,18 @@ public:
             for (size_t i = 0; i < particles.size(); i++)
             {
                 std::pair<int, int> cpos = grid.getCellCoords(particles[i].pos);
-                for (int dx = -1; dx <= 1; dx++)
+                for (int dy = -1; dy <= 1; dy++)
                 {
-                    for (int dy = -1; dy <= 1; dy++)
+                    int ny = cpos.second + dy;
+                    int nyOffset = ny * grid.cols;
+                    for (int dx = -1; dx <= 1; dx++)
                     {
                         int nx = cpos.first + dx;
-                        int ny = cpos.second + dy;
-
+                        
                         if (nx < 0 || nx >= grid.cols || ny < 0 || ny >= grid.rows)
                             continue;
 
-                        int neighbourCell = nx + ny * grid.cols;
+                        int neighbourCell = nx + nyOffset;
 
                         for (int j : grid.getCellParticles(neighbourCell))
                         {
@@ -102,21 +112,26 @@ public:
     void checkWalls(Particle &p)
     {
         // optimise later and add damping
+        Vec2 currentVelocity = p.pos - p.oldPos;
         if (p.pos.y > screenHeight - p.radius)
         {
             p.pos.y = screenHeight - p.radius;
+            p.oldPos.y = p.pos.y + currentVelocity.y * damping;
         }
         if (p.pos.x > screenWidth - p.radius)
         {
             p.pos.x = screenWidth - p.radius;
+            p.oldPos.x = p.pos.x + currentVelocity.x * damping;
         }
         if (p.pos.x < p.radius)
         {
             p.pos.x = p.radius;
+            p.oldPos.x = p.pos.x + currentVelocity.x * damping;
         }
         if (p.pos.y < p.radius)
         {
             p.pos.y = p.radius;
+            p.oldPos.y = p.pos.y + currentVelocity.y * damping;
         }
     }
 
