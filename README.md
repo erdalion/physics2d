@@ -2,7 +2,7 @@
 
 A single-threaded 2D particle physics simulation written from scratch in **C++20** with **Raylib**, capable of simulating **10,000+ particles at 60 FPS**.
 
-<!-- ![Simulation Demo](assets/demo.gif) -->
+![Simulation Demo](assets/demo.gif)
 
 ## Key Features
 
