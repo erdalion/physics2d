@@ -18,7 +18,7 @@ public:
         oldPos = pos;
         pos = pos + velocity + acceleration * (dt * dt);
         //using Verlet equation
-        acceleration = Vec2{};
+        acceleration = Vec2{0.0f, 0.0f};
     }
 };
 
