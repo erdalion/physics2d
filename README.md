@@ -2,7 +2,8 @@
 
 A single-threaded 2D particle physics simulation written from scratch in **C++20** with **Raylib**, capable of simulating **10,000+ particles at 60 FPS**.
 
-![Simulation Demo](assets/demo.gif)
+<!-- ![Simulation Demo](assets/demo.mov) -->
+<video src="assets/demo.mov" width="400" controls></video>
 
 ## Key Features
 
@@ -24,4 +25,17 @@ A single-threaded 2D particle physics simulation written from scratch in **C++20
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ./build/Physics2D
+```
+
+### Easter Egg (`V`)
+
+Technically, you can use any black-and-white video, though as a legendary graphics easter egg, *Bad Apple* is more than appropriate.
+
+<video src="assets/demo1.mov" width="400" controls></video>
+
+To keep the repository lightweight, video frames are excluded via `.gitignore`. To run the easter egg locally, extract frames into a `frames/` directory in `assets/` :
+
+```bash
+mkdir frames
+ffmpeg -i bad_apple.mp4 -vf "fps=60" frames/frame_%04d.png
 ```

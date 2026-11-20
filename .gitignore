@@ -70,3 +70,9 @@ Testing/
 #vscode
 .vscode/*
 .vscode/
+
+#video frames
+frames/
+
+#mac related files
+.DS_store

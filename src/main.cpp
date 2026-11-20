@@ -2,34 +2,43 @@
 #include "vec2.h"
 #include "particle.h"
 #include "solver.h"
+#include "videoHandler.h"
 #include <vector>
 #include <cmath>
 #include <chrono>
 
 int main(void)
 {
-    const int screenWidth = 1280;
-    const int screenHeight = 800;
+    const int screenWidth = 800;
+    const int screenHeight = 400;
     const int particleRadius = 2;
     Solver solver = Solver(screenWidth, screenHeight, particleRadius, Vec2{0, 1000.0f});
 
     InitWindow(screenWidth, screenHeight, "Testowanko");
-
     SetTargetFPS(60);
 
+    //Particle texture, cause DrawCircel is slow as hell
+    int texSize = particleRadius * 2;
+    RenderTexture2D circleTex = LoadRenderTexture(texSize, texSize);
+    BeginTextureMode(circleTex);
+    ClearBackground(BLANK);
+    DrawCircle(particleRadius, particleRadius, static_cast<float>(particleRadius), WHITE);
+    EndTextureMode();
+
     constexpr float dt = 1.0f / 60.0f;
+    VideoHandler videoHandler;
 
     while (!WindowShouldClose())
     {
         BeginDrawing();
 
-        ClearBackground({28, 28, 28, 255});
+        ClearBackground({40, 40, 40, 255});
 
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
         {
             Vector2 mousePos = GetMousePosition();
             int r = GetRandomValue(-5, 5);
-            solver.addParticle(Vec2{mousePos.x + r, mousePos.y + r}, 2, WHITE);
+            solver.addParticle(Vec2{mousePos.x + r, mousePos.y + r}, particleRadius, WHITE);
         }
 
         static bool autoSpawn = false;
@@ -38,12 +47,10 @@ int main(void)
 
         if (autoSpawn)
         {
-            float time = static_cast<float>(GetTime());
-            float spawnX = screenWidth * 0.5f + std::sin(time * 2.0f) * 250.0f; // sin to clamp between -1;1
-            for (int i = 0; i < 8; ++i)
+            for (int i = 0; i < 8 && solver.getParticles().size() < 10000; ++i)
             {
-                float offsetX = (i - 3.5f) * (particleRadius * 2.2f);
-                solver.addParticle(Vec2{spawnX + offsetX, 30.0f}, particleRadius, WHITE);
+                float spawnX = static_cast<float>(GetRandomValue(particleRadius, screenWidth - particleRadius));
+                solver.addParticle(Vec2{spawnX, 10.0f}, particleRadius, WHITE);
             }
         }
 
@@ -61,10 +68,16 @@ int main(void)
             }
         }
 
+        if (IsKeyPressed(KEY_V)) // Toggle Video Playback
+        {
+            videoHandler.toggle(dt);
+        }
+
         if (IsKeyPressed(KEY_R)) // reset
         {
             solver.clearParticles();
             autoSpawn = false;
+            videoHandler.reset();
         }
 
         // Physics part
@@ -72,27 +85,35 @@ int main(void)
         solver.update(dt);
         auto t1 = std::chrono::steady_clock::now();
 
-        // draw
+        // Easter Egg
+        videoHandler.update(dt);
+
+        // Draw
         for (const Particle &p : solver.getParticles())
         {
-            DrawCircleV({p.pos.x, p.pos.y}, p.radius, p.color);
+            Color color = p.color;
+            color = videoHandler.getColor(p.pos.x, p.pos.y, screenWidth, screenHeight, color);
+            // DrawCircleV({p.pos.x, p.pos.y}, p.radius, color);
+            DrawTextureV(circleTex.texture, {p.pos.x - p.radius, p.pos.y - p.radius}, color);
         }
+
         auto t2 = std::chrono::steady_clock::now();
 
         // count time
         float physicsMs = std::chrono::duration<float, std::milli>(t1 - t0).count();
         float drawMs = std::chrono::duration<float, std::milli>(t2 - t1).count();
 
-        DrawRectangle(5, 5, 290, 82, Color{15, 15, 15, 200});
-        DrawRectangleLines(5, 5, 290, 82, Color{80, 80, 80, 255});
-        DrawFPS(10, 10);
-        DrawText(TextFormat("Particles: %zu", solver.getParticles().size()), 110, 10, 20, LIGHTGRAY);
-        DrawText(TextFormat("Physics: %.2f ms", physicsMs), 10, 35, 20, SKYBLUE);
-        DrawText(TextFormat("Draw:    %.2f ms", drawMs), 10, 60, 20, GOLD);
+        DrawRectangle(5, 5, 470, 24, Color{15, 15, 15, 200});
+        DrawRectangleLines(5, 5, 470, 24, Color{80, 80, 80, 255});
+        DrawText(TextFormat("FPS: %d", GetFPS()), 10, 11, 12, LIGHTGRAY);
+        DrawText(TextFormat("Particles: %zu", solver.getParticles().size()), 70, 11, 12, LIGHTGRAY);
+        DrawText(TextFormat("Physics: %.2f ms", physicsMs), 175, 11, 12, SKYBLUE);
+        DrawText(TextFormat("Draw: %.2f ms", drawMs), 310, 11, 12, GOLD);
 
         EndDrawing();
     }
 
+    UnloadRenderTexture(circleTex);
     CloseWindow();
 
     return 0;

@@ -17,6 +17,11 @@ FetchContent_MakeAvailable(raylib)
 
 add_executable(physics2d src/main.cpp)
 target_link_libraries(physics2d PRIVATE raylib)
+add_custom_command(TARGET physics2d POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E create_symlink
+    "${CMAKE_SOURCE_DIR}/assets/frames"
+    "$<TARGET_FILE_DIR:physics2d>/frames"
+)
 
 if(APPLE)
     target_link_libraries(physics2d PRIVATE "-framework IOKit" "-framework Cocoa" "-framework OpenGL")
